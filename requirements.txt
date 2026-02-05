@@ -1,0 +1,23 @@
+# Variant Analytics Dashboard v2.0 - Plotly Dash Version
+
+# Core Dash
+dash>=2.14.0
+dash-bootstrap-components>=1.5.0
+
+# Plotly for visualizations
+plotly>=5.18.0
+
+# Flask (underlying server)
+Flask>=2.3.0
+
+# Google Cloud
+google-cloud-bigquery>=3.11.0
+google-cloud-storage>=2.10.0
+
+# Data Processing
+pyarrow>=13.0.0
+pandas>=2.0.0
+db-dtypes>=1.1.0
+
+# Server
+gunicorn>=21.2.0
