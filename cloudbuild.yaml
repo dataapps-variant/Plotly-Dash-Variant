@@ -1,14 +1,23 @@
 # Cloud Build configuration for Variant Analytics Dashboard (Dash Version)
-# Deploy to Cloud Run
+# Uses the same service account as the Streamlit version
 
 steps:
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/variant-dashboard-dash:$COMMIT_SHA', '.']
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/variant-dashboard-dash:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/variant-dashboard-dash:latest'
+      - '.'
 
-  # Push the container image to Container Registry
+  # Push the container images to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/variant-dashboard-dash:$COMMIT_SHA']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/variant-dashboard-dash:latest']
 
   # Deploy container image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -23,31 +32,34 @@ steps:
       - 'us-central1'
       - '--platform'
       - 'managed'
-      - '--allow-unauthenticated'
       - '--memory'
-      - '2Gi'
+      - '4Gi'
       - '--cpu'
       - '2'
+      - '--timeout'
+      - '300'
+      - '--concurrency'
+      - '20'
       - '--min-instances'
-      - '0'
+      - '1'
       - '--max-instances'
-      - '10'
+      - '5'
+      - '--allow-unauthenticated'
       - '--port'
       - '8080'
+      # Use the SAME service account as Streamlit version
+      - '--service-account'
+      - 'variant-dashboard-sa@$PROJECT_ID.iam.gserviceaccount.com'
       - '--set-env-vars'
-      - 'GCS_CACHE_BUCKET=${_GCS_CACHE_BUCKET}'
+      - 'GCS_CACHE_BUCKET=variant-dashboard-cache-$PROJECT_ID'
+      - '--cpu-boost'
+      - '--no-cpu-throttling'
 
-# Store images in Container Registry
 images:
   - 'gcr.io/$PROJECT_ID/variant-dashboard-dash:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/variant-dashboard-dash:latest'
 
-# Substitution variables
-substitutions:
-  _GCS_CACHE_BUCKET: 'your-cache-bucket-name'
-
-# Build timeout
 timeout: '1200s'
 
-# Build options
 options:
   logging: CLOUD_LOGGING_ONLY
